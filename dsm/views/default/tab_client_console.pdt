@@ -1,0 +1,66 @@
+	
+	<h4><?php $this->_("Dsm.tab_client_console.heading_console");?></h4>
+	<div class="table-responsive">
+		<table class="table table-striped">
+			<tbody>
+				<?php
+				// Display the console fields
+				if ($this->Html->ifSet($type) == "console") {
+				?>
+				<tr>
+					<td><?php $this->_("Dsm.tab_client_console.console_username");?></td>
+					<td><?php $this->Html->_($console->username);?></td>
+				</tr>
+				<tr>
+					<td><?php $this->_("Dsm.tab_client_console.console_password");?></td>
+					<td><?php $this->Html->_($console->password);?></td>
+				</tr>
+				<?php
+				}
+				else {
+					// Display the VNC fields
+				?>
+				<tr>
+					<td><?php $this->_("Dsm.tab_client_console.vnc_password");?></td>
+					<td><?php $this->Html->_($console->vnc_password);?></td>
+				</tr>
+				<?php
+				}
+				?>
+			</tbody>
+		</table>
+	</div>
+	
+	<div class="row">
+		<div class="col-md-12">
+			<?php
+			// Display the console applet
+			if ($this->Html->ifSet($type) == "console") {
+			?>
+			<applet width="100%" height="480"
+				archive="SSHTermApplet-signed.jar,SSHTermApplet-jdkbug-workaround-signed.jar,SSHTermApplet-jdk1.3.1-dependencies-signed.jar"
+				code="com.sshtools.sshterm.SshTermApplet"
+				codebase="<?php echo $this->Html->safe(VENDORWEBDIR . "sshterm-applet/");?>">
+				<param name="sshapps.connection.host" value="<?php $this->Html->_($node_statistics->ip);?>" />
+				<param name="sshapps.connection.port" value="<?php $this->Html->_($node_statistics->sshport);?>" />
+				<param name="sshapps.connection.userName" value="<?php $this->Html->_($console->username);?>" />
+				<param name="sshapps.connection.connectImmediately" value="true" />
+				<param name="sshapps.connection.authenticationMethod" value="password" />
+			</applet>
+			<?php
+			}
+			elseif ($this->Html->ifSet($vnc_applet_available, false)) {
+			?>
+			<applet width="100%" height="480"
+				archive="VncViewer.jar" code="VncViewer.class" codebase="<?php echo $this->Html->safe(VENDORWEBDIR . "vnc/");?>">
+				<param name="Open new window" value="No" />
+				<param name="Scaling factor" value="auto" />
+				<param name="PORT" value="<?php echo $this->Html->_($console->vnc_port);?>" />
+				<param name="HOST" value="<?php echo $this->Html->_($console->vnc_ip);?>" />
+				<param name="PASSWORD" value="<?php echo $this->Html->_($console->vnc_password);?>" />
+			</applet>
+			<?php
+			}
+			?>
+		</div>
+	</div>

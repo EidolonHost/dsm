@@ -1,0 +1,73 @@
+		<?php
+		$this->Widget->clear();
+		$this->Widget->create($this->_("Dsm.add_row.box_title", true));
+		?>
+		<div class="inner">
+			<?php
+			$this->Form->create();
+			?>
+			<div class="title_row first">
+				<h3><?php $this->_("Dsm.add_row.basic_title");?></h3>
+			</div>
+			<div class="pad">
+				<ul>
+					<li>
+						<?php
+						$this->Form->label($this->_("Dsm.row_meta.server_name", true), "server_name");
+						$this->Form->fieldText("server_name", $this->Html->ifSet($vars->server_name), array('id' => "server_name"));
+						?>
+					</li>
+					<li>
+                                                <?php
+                                                $this->Form->label($this->_("Dsm.row_meta.host", true), "host");
+                                                $this->Form->fieldText("host", $this->Html->ifSet($vars->host), array('id' => "host"));
+                                                ?>
+                                        </li>
+					<li>
+						<?php
+						$this->Form->label($this->_("Dsm.row_meta.user_name", true), "user_name");
+						$this->Form->fieldText("user_name", $this->Html->ifSet($vars->user_name), array('id' => "user_name"));
+						?>
+					</li>
+					<li>
+						<?php
+						$this->Form->label($this->_("Dsm.row_meta.password", true), "password");
+						$this->Form->fieldText("password", $this->Html->ifSet($vars->password), array('id' => "password"));
+						?>
+					</li>
+					<li>
+                                                <?php
+                                                $this->Form->label($this->_("Dsm.row_meta.conpanel", true), "conpanel");
+                                                $this->Form->fieldText("conpanel", $this->Html->ifSet($vars->conpanel), array('id' => "conpanel"));
+                                                ?>
+                                        </li>
+					<li>
+						<?php
+						$this->Form->label($this->_("Dsm.row_meta.port", true), "port");
+						$this->Form->fieldText("port", $this->Html->ifSet($vars->port, $this->_("Dsm.row_meta.default_port", true)), array('id' => "port"));
+						?>
+					</li>
+				</ul>
+			</div>
+
+			<div class="title_row">
+				<h3><?php $this->_("Dsm.add_row.notes_title");?></h3>
+			</div>
+			<div class="pad">
+				<ul>
+					<li>
+						<?php
+						$this->Form->fieldTextarea("notes", $this->Html->ifSet($vars->notes));
+						?>
+					</li>
+				</ul>
+			</div>
+			
+			<div class="button_row"><a class="btn_right submit" href="#"><?php $this->_("Dsm.add_row.add_btn");?></a></div>
+			<?php
+			$this->Form->end();
+			?>
+		</div>
+		<?php
+		$this->Widget->end();
+		?>

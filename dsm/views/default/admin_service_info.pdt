@@ -1,0 +1,10 @@
+	<table class="table">
+		<tr class="heading_row">
+			<td class="fixed_small center border_none"><span class="paymnt_arrow"></span></td>
+			<td class="border_left last"><?php $this->_("Dsm.service_info.Dsm_main_ip_address");?></td>
+		</tr>
+		<tr>
+			<td></td>
+			<td><?php $this->Html->_($service_fields->Dsm_main_ip_address);?></td>
+		</tr>
+	</table>

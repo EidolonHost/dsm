@@ -1,0 +1,151 @@
+
+	<div class="title_row first">
+		<h3><?php $this->_("Dsm.tab_actions.heading_actions");?></h3>
+	</div>
+	<div class="pad">
+		<div class="options">
+			<p><?php $this->_("Dsm.tab_actions.server_status");?> <span class="buff <?php $this->Html->_($server->state);?>"><?php $this->_("Dsm.tab_actions.status_" . $this->Html->_($server->state, true));?></span></p>
+			<?php
+			if ($this->Html->ifSet($server->state) == "online") {
+			?>
+			<a href="<?php echo $this->Html->safe($this->base_uri . "clients/servicetab/" . $this->Html->ifSet($client_id) . "/" . $this->Html->ifSet($service_id) . "/tabActions/reboot/");?>" class="reboot"><?php $this->_("Dsm.!actions.reboot");?></a>
+			<a href="<?php echo $this->Html->safe($this->base_uri . "clients/servicetab/" . $this->Html->ifSet($client_id) . "/" . $this->Html->ifSet($service_id) . "/tabActions/shutdown/");?>" class="shutdown"><?php $this->_("Dsm.!actions.shutdown");?></a>
+			<?php
+			}
+			elseif ($this->Html->ifSet($server->state) == "offline") {
+			?>
+			<a href="<?php echo $this->Html->safe($this->base_uri . "clients/servicetab/" . $this->Html->ifSet($client_id) . "/" . $this->Html->ifSet($service_id) . "/tabActions/boot/");?>" class="boot"><?php $this->_("Dsm.!actions.boot");?></a>
+			<?php
+			}
+			?>
+			<a href="#" class="reinstall"><?php $this->_("Dsm.!actions.reinstall");?></a>
+			<a href="#" class="hostname"><?php $this->_("Dsm.!actions.hostname");?></a>
+			<a href="#" class="password"><?php $this->_("Dsm.!actions.password");?></a>
+		</div>
+	</div>
+	
+	<div id="reinstall" style="display:none;">
+		<div class="title_row">
+			<h3><?php $this->_("Dsm.tab_actions.heading_reinstall");?></h3>
+		</div>
+		<?php
+		$this->Form->create($this->base_uri . "clients/servicetab/" . $this->Html->ifSet($client_id) . "/" . $this->Html->ifSet($service_id) . "/tabActions/reinstall/");
+		?>
+		<div class="pad">
+			<ul>
+				<li>
+					<?php
+					$this->Form->label($this->_("Dsm.tab_actions.field_template", true), "template");
+					$this->Form->fieldSelect("template", $this->Html->ifSet($templates), $this->Html->ifSet($vars->template), array('id' => "template"));
+					?>
+				</li>
+				<li>
+					<?php
+					$this->Form->fieldCheckbox("confirm", "1", "0", array('id' => "confirm"));
+					$this->Form->label($this->_("Dsm.tab_actions.field_confirm", true), "confirm", array('class' => "inline"));
+					?>
+				</li>
+			</ul>
+		</div>
+		<div class="button_row">
+			<a class="btn_right submit" href="#"><?php $this->_("Dsm.tab_actions.field_reinstall_submit");?></a>
+		</div>
+		<?php
+		$this->Form->end();
+		?>
+	</div>
+	
+	<div id="hostname" style="display:none;">
+		<div class="title_row">
+			<h3><?php $this->_("Dsm.tab_actions.heading_hostname");?></h3>
+		</div>
+		<?php
+		$this->Form->create($this->base_uri . "clients/servicetab/" . $this->Html->ifSet($client_id) . "/" . $this->Html->ifSet($service_id) . "/tabActions/hostname/");
+		?>
+		<div class="pad">
+			<p><?php $this->_("Dsm.tab_actions.text_hostname_reboot");?></p>
+			<ul>
+				<li>
+					<?php
+					$this->Form->label($this->_("Dsm.tab_actions.field_hostname", true), "host");
+					$this->Form->fieldText("hostname", $this->Html->ifSet($vars->hostname), array('id' => "host"));
+					?>
+				</li>
+			</ul>
+		</div>
+		<div class="button_row">
+			<a class="btn_right submit" href="#"><?php $this->_("Dsm.tab_actions.field_hostname_submit");?></a>
+		</div>
+		<?php
+		$this->Form->end();
+		?>
+	</div>
+	
+	<div id="password" style="display:none;">
+		<div class="title_row">
+			<h3><?php $this->_("Dsm.tab_actions.heading_password");?></h3>
+		</div>
+		<?php
+		$this->Form->create($this->base_uri . "clients/servicetab/" . $this->Html->ifSet($client_id) . "/" . $this->Html->ifSet($service_id) . "/tabActions/password/");
+		?>
+		<div class="pad">
+			<ul>
+				<li>
+					<?php
+					$this->Form->label($this->_("Dsm.tab_actions.field_password", true), "pass");
+					$this->Form->fieldPassword("password", array('id' => "pass"));
+					?>
+				</li>
+				<li>
+					<?php
+					$this->Form->label($this->_("Dsm.tab_actions.field_confirm_password", true), "confirm_password");
+					$this->Form->fieldPassword("confirm_password", array('id' => "confirm_password"));
+					?>
+				</li>
+			</ul>
+		</div>
+		<div class="button_row">
+			<a class="btn_right submit" href="#"><?php $this->_("Dsm.tab_actions.field_password_submit");?></a>
+		</div>
+		<?php
+		$this->Form->end();
+		?>
+	</div>
+	
+<script type="text/javascript">
+$(document).ready(function() {
+	$(this).blestaSetHeadTag("link", {media:"screen", type:"text/css", rel:"stylesheet", href: "<?php echo $this->Html->safe($this->view_dir . "css/styles.css");?>"});
+	<?php
+	if ($this->Html->ifSet($reinstall, false)) {
+	?>
+	showSection('reinstall');
+	<?php
+	}
+	if ($this->Html->ifSet($hostname, false)) {
+	?>
+	showSection('hostname');
+	<?php
+	}
+	if ($this->Html->ifSet($password, false)) {
+	?>
+	showSection('password');
+	<?php
+	}
+	?>
+	
+	$('.options a.reinstall, .options a.hostname, .options a.password').click(function(e) {
+		hideSections();
+		showSection($(this).attr('class'));
+	});
+	
+	function hideSections() {
+		$('#reinstall').hide();
+		$('#hostname').hide();
+		$('#password').hide();
+	}
+	
+	function showSection(id) {
+		$('#' + id).show();
+	}
+});
+</script>
