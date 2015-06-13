@@ -1,0 +1,179 @@
+	
+	<h4><?php $this->_("Solusvm.tab_client_actions.heading_server_status");?></h4>
+	<?php
+	$status_class = "default";
+	switch ($this->Html->_($server->state, true)) {
+		case "online":
+			$status_class = "success";
+			break;
+		case "offline":
+			$status_class = "danger";
+			break;
+		case "disabled":
+		default:
+			break;
+	}
+	?>
+	<span class="label label-<?php $this->Html->_($status_class);?>">
+		<i class="fa fa-lightbulb-o"></i> <?php $this->_("Solusvm.tab_client_actions.status_" . $this->Html->_($server->state, true));?>
+	</span>
+	
+	<h4><?php $this->_("Solusvm.tab_client_actions.heading_actions");?></h4>
+	<div class="row options">
+		<div class="col-md-4">
+			<a<?php echo $this->Html->ifSet($server->state) != "online" ? " disabled=\"disabled\"" : "";?> class="btn btn-default btn-block btn-success" href="<?php echo $this->Html->safe($this->base_uri . "services/manage/" . $this->Html->ifSet($service_id) . "/tabClientActions/reboot/");?>">
+				<i class="fa fa-refresh"></i> <?php $this->_("Solusvm.!actions.reboot");?>
+			</a>
+			<a href="#" class="reinstall btn btn-default btn-block">
+				<i class="fa fa-download"></i> <?php $this->_("Solusvm.!actions.reinstall");?>
+			</a>
+		</div>
+		<div class="col-md-4">
+			<a<?php echo $this->Html->ifSet($server->state) != "online" ? " disabled=\"disabled\"" : "";?> class="btn btn-default btn-block btn-danger" href="<?php echo $this->Html->safe($this->base_uri . "services/manage/" . $this->Html->ifSet($service_id) . "/tabClientActions/shutdown/");?>">
+				<i class="fa fa-power-off"></i> <?php $this->_("Solusvm.!actions.shutdown");?>
+			</a>
+			<a href="#" class="hostname btn btn-default btn-block">
+				<i class="fa fa-edit"></i> <?php $this->_("Solusvm.!actions.hostname");?>
+			</a>
+		</div>
+		<div class="col-md-4">
+			<a<?php echo $this->Html->ifSet($server->state) != "offline" ? " disabled=\"disabled\"" : "";?> class="btn btn-default btn-block" href="<?php echo $this->Html->safe($this->base_uri . "services/manage/" . $this->Html->ifSet($service_id) . "/tabClientActions/boot/");?>">
+				<i class="fa fa-power-off"></i> <?php $this->_("Solusvm.!actions.boot");?>
+			</a>
+			<a href="#" class="password btn btn-default btn-block">
+				<i class="fa fa-lock"></i> <?php $this->_("Solusvm.!actions.password");?>
+			</a>
+		</div>
+	</div>
+	
+	<div class="clearfix"></div>
+	<div id="reinstall" style="display:none;">
+		<hr />
+		<h4><?php $this->_("Solusvm.tab_client_actions.heading_reinstall");?></h4>
+		
+		<?php
+		$this->Form->create($this->base_uri . "services/manage/" . $this->Html->ifSet($service_id) . "/tabClientActions/reinstall/");
+		?>
+		<div class="col-md-12">
+			<div class="form-group">
+				<?php
+				$this->Form->label($this->_("Solusvm.tab_client_actions.field_template", true), "template");
+				$this->Form->fieldSelect("template", $this->Html->ifSet($templates), $this->Html->ifSet($vars->template), array('id' => "template", 'class'=>"form-control"));
+				?>
+			</div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<?php
+						$this->Form->fieldCheckbox("confirm", "1", "0", array('id' => "confirm"));
+						$this->_("Solusvm.tab_client_actions.field_confirm");
+						?>
+					</label>
+				</div>
+			</div>
+		</div>
+		<button class="btn btn-default pull-right">
+			<i class="fa fa-download"></i> <?php $this->_("Solusvm.tab_client_actions.field_reinstall_submit");?>
+		</button>
+		<?php
+		$this->Form->end();
+		?>
+	</div>
+	
+	<div class="clearfix"></div>
+	<div id="hostname" style="display:none;">
+		<hr />
+		<h4><?php $this->_("Solusvm.tab_client_actions.heading_hostname");?></h4>
+		
+		<?php
+		$this->Form->create($this->base_uri . "services/manage/" . $this->Html->ifSet($service_id) . "/tabClientActions/hostname/");
+		?>
+		<div class="col-md-12">
+			<p><?php $this->_("Solusvm.tab_client_actions.text_hostname_reboot");?></p>
+			<div class="form-group">
+				<?php
+				$this->Form->label($this->_("Solusvm.tab_client_actions.field_hostname", true), "host");
+				$this->Form->fieldText("hostname", $this->Html->ifSet($vars->hostname), array('id' => "host", 'class'=>"form-control", 'placeholder'=>$this->_("Solusvm.tab_client_actions.field_hostname", true)));
+				?>
+			</div>
+		</div>
+		<button class="btn btn-default pull-right">
+			<i class="fa fa-edit"></i> <?php $this->_("Solusvm.tab_client_actions.field_hostname_submit");?>
+		</button>
+		<?php
+		$this->Form->end();
+		?>
+	</div>
+	
+	<div class="clearfix"></div>
+	<div id="password" style="display:none;">
+		<hr />
+		<h4><?php $this->_("Solusvm.tab_client_actions.heading_password");?></h4>
+		
+		<?php
+		$this->Form->create($this->base_uri . "services/manage/" . $this->Html->ifSet($service_id) . "/tabClientActions/password/");
+		?>
+		<div class="col-md-12">
+			<div class="form-group">
+				<?php
+				$this->Form->label($this->_("Solusvm.tab_client_actions.field_password", true), "pass");
+				$this->Form->fieldPassword("password", array('id' => "pass", 'class'=>"form-control"));
+				?>
+			</div>
+			<div class="form-group">
+				<?php
+				$this->Form->label($this->_("Solusvm.tab_client_actions.field_confirm_password", true), "confirm_password");
+				$this->Form->fieldPassword("confirm_password", array('id' => "confirm_password", 'class'=>"form-control"));
+				?>
+			</div>
+		</div>
+		<button class="btn btn-default pull-right">
+			<i class="fa fa-lock"></i> <?php $this->_("Solusvm.tab_client_actions.field_password_submit");?>
+		</button>
+		<?php
+		$this->Form->end();
+		?>
+	</div>
+	
+<script type="text/javascript">
+$(document).ready(function() {
+	<?php
+	if ($this->Html->ifSet($reinstall, false)) {
+	?>
+	showSection('reinstall');
+	<?php
+	}
+	if ($this->Html->ifSet($hostname, false)) {
+	?>
+	showSection('hostname');
+	<?php
+	}
+	if ($this->Html->ifSet($password, false)) {
+	?>
+	showSection('password');
+	<?php
+	}
+	?>
+	
+	$('.options a.reinstall, .options a.hostname, .options a.password').click(function(e) {
+		var item_class = "reinstall";
+		if ($(this).hasClass('hostname'))
+			item_class = "hostname";
+		else if ($(this).hasClass('password'))
+			item_class = "password";
+		
+		hideSections();
+		showSection(item_class);
+	});
+	
+	function hideSections() {
+		$('#reinstall').hide();
+		$('#hostname').hide();
+		$('#password').hide();
+	}
+	
+	function showSection(id) {
+		$('#' + id).show();
+	}
+});
+</script>

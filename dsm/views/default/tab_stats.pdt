@@ -1,0 +1,76 @@
+	
+	<div class="title_row first">
+		<h3><?php $this->_("Dsm.tab_stats.heading_stats");?></h3>
+	</div>
+	<div class="pad">
+        <?php
+        $stats_available = 0;
+        $keys = array('bandwidth' => "bandwidth", 'memory' => "memory", 'hdd' => "space");
+        foreach ($keys as $key => $name) {
+            if ($this->Html->ifSet($server->{$key}, false) && $this->Html->ifSet($server->{$key}['total_' . $name]) > 0)
+                $stats_available++;
+        }
+
+        if ($stats_available == 0) {
+        ?>
+        <p><?php $this->_("Dsm.tab_status.no_results");?></p>
+        <?php
+        }
+        else {
+            ?>
+            <ul class="options">
+                <?php
+                foreach ($keys as $key => $name) {
+                    if ($this->Html->ifSet($server->{$key}, false) && $this->Html->ifSet($server->{$key}['total_' . $name]) > 0) {
+                        $percent_used = $this->Html->_($server->{$key}['percent_used_' . $name], true);
+                ?>
+                <li>
+                    <?php $this->_("Dsm.tab_stats." . $name);?>
+                    <span class="buff <?php echo $percent_used > 80 ? "offline" : "online";?>"><?php $this->_("Dsm.tab_stats." . $name . "_stats", false, $this->Html->_($server->{$key}['used_' . $name . '_formatted'], true), $this->Html->_($server->{$key}['total_' . $name . '_formatted'], true));?></span>
+                    <?php $this->_("Dsm.tab_stats." . $name . "_percent_available", false, $percent_used);?>
+                </li>
+                <?php
+                    }
+                }
+                ?>
+            </ul>
+            <?php
+        }
+        ?>
+	</div>
+	<?php
+	$graph_keys = array("trafficgraph", "loadgraph", "memorygraph");
+	$graphs = false;
+	foreach ($graph_keys as $value) {
+		if ($this->Html->ifSet($server->{$value}, false)) {
+			$graphs = true;
+			break;
+		}
+	}
+	
+	// Display graphs
+	if ($graphs) {
+	?>
+	<div class="title_row">
+		<h3><?php $this->_("Dsm.tab_stats.heading_graphs");?></h3>
+	</div>
+	<div class="pad">
+		<?php
+		foreach ($graph_keys as $value) {
+			if (!$this->Html->ifSet($server->{$value}, false))
+				continue;
+		?>
+		<p><img src="<?php echo $this->Html->safe($this->Html->ifSet($module_hostname) . $this->Html->ifSet($server->{$value}));?>" /></p>
+		<?php
+		}
+		?>
+	</div>
+	<?php
+	}
+	?>
+	
+<script type="text/javascript">
+$(document).ready(function() {
+	$(this).blestaSetHeadTag("link", {media:"screen", type:"text/css", rel:"stylesheet", href: "<?php echo $this->Html->safe($this->view_dir . "css/styles.css");?>"});
+});
+</script>

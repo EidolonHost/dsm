@@ -1,0 +1,62 @@
+	
+	<div class="row">
+		<div class="col-md-12">
+			<h4><?php $this->_("Dsm.tab_client_stats.heading_stats");?></h4>
+            <?php
+            $stats_available = 0;
+            $keys = array('bandwidth' => "bandwidth", 'memory' => "memory", 'hdd' => "space");
+            foreach ($keys as $key => $name) {
+                if ($this->Html->ifSet($server->{$key}, false) && $this->Html->ifSet($server->{$key}['total_' . $name]) > 0)
+                    $stats_available++;
+            }
+
+            if ($stats_available == 0) {
+            ?>
+            <p><?php $this->_("Dsm.tab_status.no_results");?></p>
+            <?php
+            }
+            else {
+                foreach ($keys as $key => $name) {
+                    if ($this->Html->ifSet($server->{$key}, false) && $this->Html->ifSet($server->{$key}['total_' . $name]) > 0) {
+                        $percent_used = round($this->Html->ifSet($server->{$key}['percent_used_' . $name], 0), 2);
+                ?>
+                <label><?php $this->_("Dsm.tab_client_stats." . $name);?></label>
+                <small>
+                    <?php $this->_("Dsm.tab_client_stats.usage", false, $this->Html->safe($this->Html->ifSet($server->{$key}['used_' . $name . '_formatted'])), $this->Html->safe($this->Html->ifSet($server->{$key}['total_' . $name . '_formatted'])));?>
+                </small>
+                <div class="progress">
+                    <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="<?php $this->Html->_($percent_used);?>" aria-valuemin="0" aria-valuemax="100" style="width: <?php $this->Html->_($percent_used);?>%">
+                        <span class="sr-only"><?php $this->_("Dsm.tab_client_stats.usage", false, $this->Html->safe($this->Html->ifSet($server->{$key}['used_' . $name . '_formatted'])), $this->Html->safe($this->Html->ifSet($server->{$key}['total_' . $name . '_formatted'])));?></span>
+                    </div>
+                </div>
+                <?php
+                    }
+                }
+            }
+			
+			$graph_keys = array("trafficgraph", "loadgraph", "memorygraph");
+			$graphs = false;
+			foreach ($graph_keys as $value) {
+				if ($this->Html->ifSet($server->{$value}, false)) {
+					$graphs = true;
+					break;
+				}
+			}
+			
+			// Display graphs
+			if ($graphs) {
+			?>
+			<hr />
+			<h4><?php $this->_("Dsm.tab_client_stats.heading_graphs");?></h4>
+				<?php
+				foreach ($graph_keys as $value) {
+					if (!$this->Html->ifSet($server->{$value}, false))
+						continue;
+				?>
+			<p><img src="<?php echo $this->Html->safe($this->Html->ifSet($module_hostname) . $this->Html->ifSet($server->{$value}));?>" /></p>
+				<?php
+				}
+			}
+			?>
+		</div>
+	</div>
