@@ -5,7 +5,8 @@
  * @package blesta
  * @subpackage blesta.components.modules.Dsm
  * @copyright Copyright (c) 2015, EidolonHost
- * @license http://eidolonhost.com/license/ EidolonHost License Agreement
+ * @license http://blesta.com/license/ Blesta License Agreement
+ * @Based on SolusVM module by Blesta
  * @link http://eidolonhost.com/ EidolonHost
  */
 class Dsm extends Module {
