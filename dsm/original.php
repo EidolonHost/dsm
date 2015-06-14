@@ -13,7 +13,7 @@ class Dsm extends Module {
 	/**
 	 * @var string The version of this module
 	 */
-	private static $version = "0.0.2";
+	private static $version = "0.0.1";
 	/**
 	 * @var string The authors of this module
 	 */
@@ -173,6 +173,18 @@ class Dsm extends Module {
 			)
 		);
 
+		// Template must be given if it can be set by the client
+		if (isset($package->meta->set_template) && $package->meta->set_template == "client" &&
+			isset($package->meta->type)) {
+
+			$rules['Dsm_template'] = array(
+				'valid' => array(
+					'rule' => array(array($this, "validateTemplate"), $package->meta->type, $package->module_row, $package->module_group),
+					'message' => Language::_("Dsm.!error.Dsm_template.valid", true)
+				)
+			);
+		}
+
 		// Virtual Server ID is not required on add
 		if (empty($vars['Dsm_vserver_id']) && !$edit)
 			unset($rules['Dsm_vserver_id']);
@@ -180,6 +192,8 @@ class Dsm extends Module {
 		// Set fields to optional
 		if ($edit) {
 			$rules['Dsm_hostname']['format']['if_set'] = true;
+			if (isset($rules['Dsm_template']))
+				$rules['Dsm_template']['valid']['if_set'] = true;
 		}
 
 		$this->Input->setRules($rules);
@@ -209,7 +223,7 @@ class Dsm extends Module {
 	public function addService($package, array $vars=null, $parent_package=null, $parent_service=null, $status="pending") {
 		// Load the API
 		$row = $this->getModuleRow();
-		$api = $this->getApi( $row->meta->host, $row->meta->port);
+		$api = $this->getApi($row->meta->user_id, $row->meta->key, $row->meta->host, $row->meta->port);
 
 		// Get the fields for the service
 		$params = $this->getFieldsFromInput($vars, $package);
@@ -328,6 +342,16 @@ class Dsm extends Module {
 				'value' => (isset($client['password']) ? $client['password'] : null),
 				'encrypted' => 1
 			),
+			array(
+				'key' => "Dsm_plan",
+				'value' => $params['plan'],
+				'encrypted' => 0
+			),
+			array(
+				'key' => "Dsm_template",
+				'value' => $params['template'],
+				'encrypted' => 0
+			)
 		);
 	}
 
@@ -860,11 +884,134 @@ class Dsm extends Module {
 		// Fetch all packages available for the given server or server group
 		$module_row = $this->getModuleRowByServer((isset($vars->module_row) ? $vars->module_row : 0), (isset($vars->module_group) ? $vars->module_group : ""));
 
+		$templates = array();
+		$plans = array();
+
 		// Load more server info when the type is set
 		if ($module_row && !empty($vars->meta['type'])) {
+			// Load nodes and plans
+			$plans = $this->getPlans($vars->meta['type'], $module_row);
+			$nodes = $this->getNodes($vars->meta['type'], $module_row);
+			$node_groups = $this->getNodeGroups($vars->meta['type'], $module_row);
+
+			// Load templates
+			if (isset($vars->meta['set_template']) && $vars->meta['set_template'] == "admin")
+				$templates = $this->getTemplates($vars->meta['type'], $module_row);
+		}
+
+		// Remove nodes from 'available' if they are currently 'assigned'
+		if (isset($vars->meta['nodes'])) {
+			$this->assignGroups($nodes, $vars->meta['nodes']);
+
+			// Set the node value as the node key
+			$temp = array();
+			foreach ($vars->meta['nodes'] as $key => $value)
+				$temp[$value] = $value;
+			$vars->meta['nodes'] = $temp;
+			unset($temp, $key, $value);
+
+			// Individual nodes are assigned
+			if (!empty($vars->meta['nodes']))
+				$vars->meta['set_node'] = 1;
 		}
 
 		$fields = new ModuleFields();
+
+		// Show nodes, and set javascript field toggles
+		$this->Form->setOutput(true);
+		$fields->setHtml("
+			<table>
+				<tr>
+					<td>" . Language::_("Dsm.package_fields.assigned_nodes", true) . "</td>
+					<td></td>
+					<td>" . Language::_("Dsm.package_fields.available_nodes", true) . "</td>
+				</tr>
+				<tr>
+					<td>
+						" . $this->Form->fieldMultiSelect("meta[nodes][]", $this->Html->ifSet($vars->meta['nodes'], array()), array(), array("id"=>"assigned_nodes")) . "
+					</td>
+					<td><a href=\"#\" class=\"move_left\">&nbsp;</a> &nbsp; <a href=\"#\" class=\"move_right\">&nbsp;</a></td>
+					<td>
+						" . $this->Form->fieldMultiSelect("available_nodes[]", $this->Html->ifSet($nodes, array()), array(), array("id"=>"available_nodes")) . "
+					</td>
+				</tr>
+			</table>
+
+			<script type=\"text/javascript\">
+				$(document).ready(function() {
+					toggleDsmFields();
+
+					$('.Dsm_chosen_template').change(function() {
+						toggleDsmTemplates();
+						selectAssignedNodes();
+						fetchModuleOptions();
+					});
+
+					$('#Dsm_type, .Dsm_set_node').change(function() {
+						fetchModuleOptions();
+					});
+
+					// Select all assigned groups on submit
+					$('#assigned_nodes').closest('form').submit(function() {
+						selectAssignedNodes();
+					});
+
+					// Move nodes from right to left
+					$('.move_left').click(function() {
+						$('#available_nodes option:selected').appendTo($('#assigned_nodes'));
+						return false;
+					});
+					// Move nodes from left to right
+					$('.move_right').click(function() {
+						$('#assigned_nodes option:selected').appendTo($('#available_nodes'));
+						return false;
+					});
+				});
+
+				function selectAssignedNodes() {
+					$('#assigned_nodes option').attr('selected', 'selected');
+				}
+
+				function toggleDsmFields() {
+					// Hide fields dependent on this value
+					if ($('#Dsm_type').val() == '') {
+						$('#Dsm_client_set_template').parent('li').hide();
+						$('#Dsm_template').parent('li').hide();
+						$('#assigned_nodes').closest('table').hide();
+						$('#Dsm_plan').parent('li').hide();
+					}
+					// Show fields dependent on this value
+					else {
+						toggleDsmTemplates();
+						toggleDsmNodes();
+						$('#Dsm_client_set_template').parent('li').show();
+						$('#Dsm_plan').parent('li').show();
+					}
+				}
+
+				function toggleDsmTemplates() {
+					if ($('input[name=\"meta[set_template]\"]:checked').val() == 'admin')
+						$('#Dsm_template').parent('li').show();
+					else
+						$('#Dsm_template').parent('li').hide();
+				}
+
+				function toggleDsmNodes() {
+					var set_node = $('input[name=\"meta[set_node]\"]:checked');
+					if (typeof set_node === 'undefined')
+						return;
+
+					if ($(set_node).val() == '0') {
+						$('#assigned_nodes').closest('table').hide();
+						$('#Dsm_node_group').parent('li').show();
+					}
+					else {
+						$('#assigned_nodes').closest('table').show();
+						$('#Dsm_node_group').parent('li').hide();
+					}
+				}
+			</script>
+		");
 
 		// Set the Dsm type as a selectable option
 		$types = array('' => Language::_("Dsm.please_select", true)) + $this->getTypes();
@@ -873,6 +1020,28 @@ class Dsm extends Module {
 			$this->Html->ifSet($vars->meta['type']), array('id' => "Dsm_type")));
 		$fields->setField($type);
 		unset($type);
+
+		// Set field whether client or admin may choose template
+		$set_template = $fields->label(Language::_("Dsm.package_fields.set_template", true), "Dsm_client_set_template");
+		$admin_set_template = $fields->label(Language::_("Dsm.package_fields.admin_set_template", true), "Dsm_admin_set_template");
+		$client_set_template = $fields->label(Language::_("Dsm.package_fields.client_set_template", true), "Dsm_client_set_template");
+		$set_template->attach($fields->fieldRadio("meta[set_template]", "client",
+			$this->Html->ifSet($vars->meta['set_template'], "client") == "client", array('id' => "Dsm_client_set_template", 'class' => "Dsm_chosen_template"), $client_set_template));
+		$set_template->attach($fields->fieldRadio("meta[set_template]", "admin",
+			$this->Html->ifSet($vars->meta['set_template']) == "admin", array('id' => "Dsm_admin_set_template", 'class' => "Dsm_chosen_template"), $admin_set_template));
+		$fields->setField($set_template);
+
+		// Set templates that admin may choose from
+		$template = $fields->label(Language::_("Dsm.package_fields.template", true), "Dsm_template");
+		$template->attach($fields->fieldSelect("meta[template]", $templates,
+			$this->Html->ifSet($vars->meta['template']), array('id'=>"Dsm_template")));
+		$fields->setField($template);
+
+		// Set plan
+		$plan = $fields->label(Language::_("Dsm.package_fields.plan", true), "Dsm_plan");
+		$plan->attach($fields->fieldSelect("meta[plan]", $plans,
+			$this->Html->ifSet($vars->meta['plan']), array('id'=>"Dsm_plan")));
+		$fields->setField($plan);
 
 		return $fields;
 	}
@@ -896,8 +1065,8 @@ class Dsm extends Module {
 			'package' => array(),
 			'service' => array("Dsm_vserver_id", "Dsm_console_user", "Dsm_console_password",
 				"Dsm_hostname", "Dsm_main_ip_address", "Dsm_internal_ip", "Dsm_extra_ip_addresses",
-				"Dsm_node", "Dsm_username", "Dsm_password", "Dsm_root_password",
-				"Dsm_type", "Dsm_virt_id", "Dsm_vnc_ip", "Dsm_vnc_port",
+				"Dsm_node", "Dsm_username", "Dsm_password", "Dsm_plan", "Dsm_root_password",
+				"Dsm_template", "Dsm_type", "Dsm_virt_id", "Dsm_vnc_ip", "Dsm_vnc_port",
 				"Dsm_vnc_password"
 			)
 		);
@@ -924,6 +1093,21 @@ class Dsm extends Module {
 		$host_name->attach($fields->fieldText("Dsm_hostname", $this->Html->ifSet($vars->Dsm_hostname), array('id'=>"Dsm_hostname")));
 		// Set the label as a field
 		$fields->setField($host_name);
+
+		// Set the template if it can be set by the client
+		if (isset($package->meta->set_template) && isset($package->meta->type) &&
+			$package->meta->set_template == "client") {
+
+			// Fetch the templates available
+			$templates = $this->getTemplates($package->meta->type, $module_row);
+
+			// Create template label
+			$template = $fields->label(Language::_("Dsm.service_field.Dsm_template", true), "Dsm_template");
+			// Create template field and attach to template label
+			$template->attach($fields->fieldSelect("Dsm_template", $templates, $this->Html->ifSet($vars->Dsm_template), array('id'=>"Dsm_template")));
+			// Set the label as a field
+			$fields->setField($template);
+		}
 
 		// Create virtual server label
 		$vserver_id = $fields->label(Language::_("Dsm.service_field.Dsm_vserver_id", true), "Dsm_vserver_id");
@@ -959,6 +1143,21 @@ class Dsm extends Module {
 		$host_name->attach($fields->fieldText("Dsm_hostname", $this->Html->ifSet($vars->Dsm_hostname, $this->Html->ifSet($vars->domain)), array('id'=>"Dsm_hostname")));
 		// Set the label as a field
 		$fields->setField($host_name);
+
+		// Set the template if it can be set by the client
+		if (isset($package->meta->set_template) && isset($package->meta->type) &&
+			$package->meta->set_template == "client") {
+
+			// Fetch the templates available
+			$templates = $this->getTemplates($package->meta->type, $module_row);
+
+			// Create template label
+			$template = $fields->label(Language::_("Dsm.service_field.Dsm_template", true), "Dsm_template");
+			// Create template field and attach to template label
+			$template->attach($fields->fieldSelect("Dsm_template", $templates, $this->Html->ifSet($vars->Dsm_template), array('id'=>"Dsm_template")));
+			// Set the label as a field
+			$fields->setField($template);
+		}
 
 		return $fields;
 	}
@@ -1092,15 +1291,19 @@ class Dsm extends Module {
 		$service_fields = $this->serviceFieldsToObject($service->fields);
 		$module_row = $this->getModuleRow($package->module_row);
 
+		// Get templates
+		$templates = $this->getTemplates($service_fields->Dsm_type, $module_row);
+
 		// Perform the actions
-		$vars = $this->actionsTab($package, $service, false, $get, $post);
+		$vars = $this->actionsTab($package, $service, $templates, false, $get, $post);
 
 		// Set default vars
 		if (empty($vars))
-			$vars = array('hostname' => $service_fields->Dsm_hostname);
+			$vars = array('template' => $service_fields->Dsm_template, 'hostname' => $service_fields->Dsm_hostname);
 
 		// Fetch the server status and templates
 		$this->view->set("server", $this->getServerState($service_fields->Dsm_vserver_id, $module_row));
+		$this->view->set("templates", $templates);
 
 		$this->view->set("vars", (object)$vars);
 		$this->view->set("client_id", $service->client_id);
@@ -1131,15 +1334,19 @@ class Dsm extends Module {
 		$service_fields = $this->serviceFieldsToObject($service->fields);
 		$module_row = $this->getModuleRow($package->module_row);
 
+		// Get templates
+		$templates = $this->getTemplates($service_fields->Dsm_type, $module_row);
+
 		// Perform the actions
-		$vars = $this->actionsTab($package, $service, true, $get, $post);
+		$vars = $this->actionsTab($package, $service, $templates, true, $get, $post);
 
 		// Set default vars
 		if (empty($vars))
-			$vars = array('hostname' => $service_fields->Dsm_hostname);
+			$vars = array('template' => $service_fields->Dsm_template, 'hostname' => $service_fields->Dsm_hostname);
 
 		// Fetch the server status and templates
 		$this->view->set("server", $this->getServerState($service_fields->Dsm_vserver_id, $module_row));
+		$this->view->set("templates", $templates);
 
 		$this->view->set("vars", (object)$vars);
 		$this->view->set("client_id", $service->client_id);
@@ -1163,7 +1370,7 @@ class Dsm extends Module {
 	 * @param array $files Any FILES parameters
 	 * @return array An array of vars for the template
 	 */
-	private function actionsTab($package, $service, $client=false, array $get=null, array $post=null) {
+	private function actionsTab($package, $service, $templates, $client=false, array $get=null, array $post=null) {
 		$vars = array();
 
 		// Get the service fields
@@ -1504,10 +1711,10 @@ class Dsm extends Module {
 	 * @param string $port The Dsm server port number
 	 * @return DsmApi The DsmApi instance
 	 */
-	private function getApi($host, $port) {
-		Loader::load(dirname(__FILE__) . DS . "apis" . DS . "dsm_api.php");
+	private function getApi($user_id, $key, $host, $port) {
+		Loader::load(dirname(__FILE__) . DS . "apis" . DS . "Dsm_api.php");
 
-		return new DsmApi($host, $port);
+		return new DsmApi($user_id, $key, $host, $port);
 	}
 
 	/**
@@ -1600,6 +1807,39 @@ class Dsm extends Module {
 			}
 		}
 		return ($response ? $response : new stdClass());
+	}
+
+	/**
+	 * Fetches the plans available for the Dsm server of the given type
+	 *
+	 * @param string $type The type of server (i.e. openvz, xen, xen hvm, kvm)
+	 * @param stdClass $module_row A stdClass object representing a single server
+	 * @return array A list of plans
+	 */
+	private function getPlans($type, $module_row) {
+		$api = $this->getApi($module_row->meta->user_id, $module_row->meta->key, $module_row->meta->host, $module_row->meta->port);
+
+		// Load the plans API
+		$api->loadCommand("Dsm_plans");
+		$response = null;
+
+		try {
+			$plans_api = new DsmPlans($api);
+			$params = array('type' => $type);
+
+			$this->log($module_row->meta->host . "|listplans", serialize($params), "input", true);
+			$response = $this->parseResponse($plans_api->getList($params), $module_row);
+		}
+		catch (Exception $e) {
+			// Nothing to do
+			return array();
+		}
+
+		// Return the plans
+		if ($response && $response->status == "success")
+			return $this->csvToArray($response->plans);
+
+		return array();
 	}
 
 	/**
@@ -1878,9 +2118,9 @@ class Dsm extends Module {
 	 */
 	private function getTypes() {
 		return array(
-                        'Linux' => Language::_("Dsm.types.linux", true),
-                        'Unix' => Language::_("Dsm.types.unix", true),
 			'Windows' => Language::_("Dsm.types.windows", true),
+			'Linux' => Language::_("Dsm.types.linux", true),
+			'Unix' => Language::_("Dsm.types.unix", true),
 		);
 	}
 
@@ -1968,9 +2208,55 @@ class Dsm extends Module {
 					'message' => Language::_("Dsm.!error.meta[type].valid", true)
 				)
 			),
+			'meta[nodes]' => array(
+				'empty' => array(
+					'rule' => array(array($this, "validateNodeSet"), (isset($vars['meta']['node_group']) ? $vars['meta']['node_group'] : null)),
+					'message' => Language::_("Dsm.!error.meta[nodes].empty", true),
+				)
+			),
+			'meta[plan]' => array(
+				'empty' => array(
+					'rule' => "isEmpty",
+					'negate' => true,
+					'message' => Language::_("Dsm.!error.meta[plan].empty", true)
+				)
+			),
+			'meta[set_template]' => array(
+				'format' => array(
+					'rule' => array("in_array", array("admin", "client")),
+					'message' => Language::_("Dsm.!error.meta[set_template].format", true)
+				)
+			)
 		);
 
+		// A template must be given for this package
+		if (isset($vars['meta']['set_template']) && $vars['meta']['set_template'] == "admin") {
+			$rules['meta[template]'] = array(
+				'empty' => array(
+					'rule' => array("in_array", array("", "--none--")),
+					'negate' => true,
+					'message' => Language::_("Dsm.!error.meta[template].empty", true)
+				)
+			);
+		}
+
 		return $rules;
+	}
+
+	/**
+	 * Validates that at least one node was selected when adding a package
+	 *
+	 * @param array $nodes A list of node names
+	 * @param string $node_groups A selected node group
+	 * @return boolean True if at least one node was given, false otherwise
+	 */
+	public function validateNodeSet($nodes, $node_group=null) {
+		// Require at least one node or node group
+		if ($node_group === null)
+			return (isset($nodes[0]) && !empty($nodes[0]));
+		elseif ($node_group != "")
+			return true;
+		return false;
 	}
 
 	/**
