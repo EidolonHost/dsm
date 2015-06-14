@@ -17,7 +17,7 @@ $lang['Dsm.!error.key.empty'] = "Please enter a key.";
 $lang['Dsm.!error.host.format'] = "The hostname appears to be invalid.";
 $lang['Dsm.!error.port.format'] = "Please enter a valid port number.";
 
-$lang['Dsm.!error.meta[type].valid'] = "Please select a valid virtualization type.";
+$lang['Dsm.!error.meta[type].valid'] = "Please select a valid server type.";
 $lang['Dsm.!error.meta[nodes].empty'] = "Please select at least one node or node group.";
 $lang['Dsm.!error.meta[plan].empty'] = "Please select a plan.";
 $lang['Dsm.!error.meta[set_template].format'] = "Please set whether to select a template or to allow clients to set a template.";
@@ -86,7 +86,7 @@ $lang['Dsm.row_meta.default_port'] = "22";
 // Server types
 $lang['Dsm.types.windows'] = "Windows";
 $lang['Dsm.types.linux'] = "Linux";
-
+$lang['Dsm.types.unix'] = "Unix";
 
 // Add module row
 $lang['Dsm.add_row.box_title'] = "Add Server";

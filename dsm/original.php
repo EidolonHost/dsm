@@ -5,8 +5,7 @@
  * @package blesta
  * @subpackage blesta.components.modules.Dsm
  * @copyright Copyright (c) 2015, EidolonHost
- * @license http://blesta.com/license/ Blesta License Agreement
- * @Based on SolusVM module by Blesta
+ * @license http://eidolonhost.com/license/ EidolonHost License Agreement
  * @link http://eidolonhost.com/ EidolonHost
  */
 class Dsm extends Module {
@@ -14,7 +13,7 @@ class Dsm extends Module {
 	/**
 	 * @var string The version of this module
 	 */
-	private static $version = "0.0.2";
+	private static $version = "0.0.1";
 	/**
 	 * @var string The authors of this module
 	 */
@@ -342,6 +341,16 @@ class Dsm extends Module {
 				'key' => "Dsm_password",
 				'value' => (isset($client['password']) ? $client['password'] : null),
 				'encrypted' => 1
+			),
+			array(
+				'key' => "Dsm_plan",
+				'value' => $params['plan'],
+				'encrypted' => 0
+			),
+			array(
+				'key' => "Dsm_template",
+				'value' => $params['template'],
+				'encrypted' => 0
 			)
 		);
 	}
@@ -875,9 +884,19 @@ class Dsm extends Module {
 		// Fetch all packages available for the given server or server group
 		$module_row = $this->getModuleRowByServer((isset($vars->module_row) ? $vars->module_row : 0), (isset($vars->module_group) ? $vars->module_group : ""));
 
+		$templates = array();
+		$plans = array();
+
 		// Load more server info when the type is set
 		if ($module_row && !empty($vars->meta['type'])) {
+			// Load nodes and plans
+			$plans = $this->getPlans($vars->meta['type'], $module_row);
+			$nodes = $this->getNodes($vars->meta['type'], $module_row);
+			$node_groups = $this->getNodeGroups($vars->meta['type'], $module_row);
 
+			// Load templates
+			if (isset($vars->meta['set_template']) && $vars->meta['set_template'] == "admin")
+				$templates = $this->getTemplates($vars->meta['type'], $module_row);
 		}
 
 		// Remove nodes from 'available' if they are currently 'assigned'
@@ -898,6 +917,102 @@ class Dsm extends Module {
 
 		$fields = new ModuleFields();
 
+		// Show nodes, and set javascript field toggles
+		$this->Form->setOutput(true);
+		$fields->setHtml("
+			<table>
+				<tr>
+					<td>" . Language::_("Dsm.package_fields.assigned_nodes", true) . "</td>
+					<td></td>
+					<td>" . Language::_("Dsm.package_fields.available_nodes", true) . "</td>
+				</tr>
+				<tr>
+					<td>
+						" . $this->Form->fieldMultiSelect("meta[nodes][]", $this->Html->ifSet($vars->meta['nodes'], array()), array(), array("id"=>"assigned_nodes")) . "
+					</td>
+					<td><a href=\"#\" class=\"move_left\">&nbsp;</a> &nbsp; <a href=\"#\" class=\"move_right\">&nbsp;</a></td>
+					<td>
+						" . $this->Form->fieldMultiSelect("available_nodes[]", $this->Html->ifSet($nodes, array()), array(), array("id"=>"available_nodes")) . "
+					</td>
+				</tr>
+			</table>
+
+			<script type=\"text/javascript\">
+				$(document).ready(function() {
+					toggleDsmFields();
+
+					$('.Dsm_chosen_template').change(function() {
+						toggleDsmTemplates();
+						selectAssignedNodes();
+						fetchModuleOptions();
+					});
+
+					$('#Dsm_type, .Dsm_set_node').change(function() {
+						fetchModuleOptions();
+					});
+
+					// Select all assigned groups on submit
+					$('#assigned_nodes').closest('form').submit(function() {
+						selectAssignedNodes();
+					});
+
+					// Move nodes from right to left
+					$('.move_left').click(function() {
+						$('#available_nodes option:selected').appendTo($('#assigned_nodes'));
+						return false;
+					});
+					// Move nodes from left to right
+					$('.move_right').click(function() {
+						$('#assigned_nodes option:selected').appendTo($('#available_nodes'));
+						return false;
+					});
+				});
+
+				function selectAssignedNodes() {
+					$('#assigned_nodes option').attr('selected', 'selected');
+				}
+
+				function toggleDsmFields() {
+					// Hide fields dependent on this value
+					if ($('#Dsm_type').val() == '') {
+						$('#Dsm_client_set_template').parent('li').hide();
+						$('#Dsm_template').parent('li').hide();
+						$('#assigned_nodes').closest('table').hide();
+						$('#Dsm_plan').parent('li').hide();
+					}
+					// Show fields dependent on this value
+					else {
+						toggleDsmTemplates();
+						toggleDsmNodes();
+						$('#Dsm_client_set_template').parent('li').show();
+						$('#Dsm_plan').parent('li').show();
+					}
+				}
+
+				function toggleDsmTemplates() {
+					if ($('input[name=\"meta[set_template]\"]:checked').val() == 'admin')
+						$('#Dsm_template').parent('li').show();
+					else
+						$('#Dsm_template').parent('li').hide();
+				}
+
+				function toggleDsmNodes() {
+					var set_node = $('input[name=\"meta[set_node]\"]:checked');
+					if (typeof set_node === 'undefined')
+						return;
+
+					if ($(set_node).val() == '0') {
+						$('#assigned_nodes').closest('table').hide();
+						$('#Dsm_node_group').parent('li').show();
+					}
+					else {
+						$('#assigned_nodes').closest('table').show();
+						$('#Dsm_node_group').parent('li').hide();
+					}
+				}
+			</script>
+		");
+
 		// Set the Dsm type as a selectable option
 		$types = array('' => Language::_("Dsm.please_select", true)) + $this->getTypes();
 		$type = $fields->label(Language::_("Dsm.package_fields.type", true), "Dsm_type");
@@ -905,6 +1020,28 @@ class Dsm extends Module {
 			$this->Html->ifSet($vars->meta['type']), array('id' => "Dsm_type")));
 		$fields->setField($type);
 		unset($type);
+
+		// Set field whether client or admin may choose template
+		$set_template = $fields->label(Language::_("Dsm.package_fields.set_template", true), "Dsm_client_set_template");
+		$admin_set_template = $fields->label(Language::_("Dsm.package_fields.admin_set_template", true), "Dsm_admin_set_template");
+		$client_set_template = $fields->label(Language::_("Dsm.package_fields.client_set_template", true), "Dsm_client_set_template");
+		$set_template->attach($fields->fieldRadio("meta[set_template]", "client",
+			$this->Html->ifSet($vars->meta['set_template'], "client") == "client", array('id' => "Dsm_client_set_template", 'class' => "Dsm_chosen_template"), $client_set_template));
+		$set_template->attach($fields->fieldRadio("meta[set_template]", "admin",
+			$this->Html->ifSet($vars->meta['set_template']) == "admin", array('id' => "Dsm_admin_set_template", 'class' => "Dsm_chosen_template"), $admin_set_template));
+		$fields->setField($set_template);
+
+		// Set templates that admin may choose from
+		$template = $fields->label(Language::_("Dsm.package_fields.template", true), "Dsm_template");
+		$template->attach($fields->fieldSelect("meta[template]", $templates,
+			$this->Html->ifSet($vars->meta['template']), array('id'=>"Dsm_template")));
+		$fields->setField($template);
+
+		// Set plan
+		$plan = $fields->label(Language::_("Dsm.package_fields.plan", true), "Dsm_plan");
+		$plan->attach($fields->fieldSelect("meta[plan]", $plans,
+			$this->Html->ifSet($vars->meta['plan']), array('id'=>"Dsm_plan")));
+		$fields->setField($plan);
 
 		return $fields;
 	}
@@ -957,6 +1094,21 @@ class Dsm extends Module {
 		// Set the label as a field
 		$fields->setField($host_name);
 
+		// Set the template if it can be set by the client
+		if (isset($package->meta->set_template) && isset($package->meta->type) &&
+			$package->meta->set_template == "client") {
+
+			// Fetch the templates available
+			$templates = $this->getTemplates($package->meta->type, $module_row);
+
+			// Create template label
+			$template = $fields->label(Language::_("Dsm.service_field.Dsm_template", true), "Dsm_template");
+			// Create template field and attach to template label
+			$template->attach($fields->fieldSelect("Dsm_template", $templates, $this->Html->ifSet($vars->Dsm_template), array('id'=>"Dsm_template")));
+			// Set the label as a field
+			$fields->setField($template);
+		}
+
 		// Create virtual server label
 		$vserver_id = $fields->label(Language::_("Dsm.service_field.Dsm_vserver_id", true), "Dsm_vserver_id");
 		// Create virtual server field and attach to virtual server label
@@ -991,6 +1143,21 @@ class Dsm extends Module {
 		$host_name->attach($fields->fieldText("Dsm_hostname", $this->Html->ifSet($vars->Dsm_hostname, $this->Html->ifSet($vars->domain)), array('id'=>"Dsm_hostname")));
 		// Set the label as a field
 		$fields->setField($host_name);
+
+		// Set the template if it can be set by the client
+		if (isset($package->meta->set_template) && isset($package->meta->type) &&
+			$package->meta->set_template == "client") {
+
+			// Fetch the templates available
+			$templates = $this->getTemplates($package->meta->type, $module_row);
+
+			// Create template label
+			$template = $fields->label(Language::_("Dsm.service_field.Dsm_template", true), "Dsm_template");
+			// Create template field and attach to template label
+			$template->attach($fields->fieldSelect("Dsm_template", $templates, $this->Html->ifSet($vars->Dsm_template), array('id'=>"Dsm_template")));
+			// Set the label as a field
+			$fields->setField($template);
+		}
 
 		return $fields;
 	}
