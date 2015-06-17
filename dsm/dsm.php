@@ -5,8 +5,8 @@
  * @package blesta
  * @subpackage blesta.components.modules.Dsm
  * @copyright Copyright (c) 2015, EidolonHost
- * @license http://blesta.com/license/ Blesta License Agreement
- * @Based on SolusVM module by Blesta
+ * @license http://www.blesta.com/license/ Blesta License Agreement
+ * @Based on SolusVM by Blesta
  * @link http://eidolonhost.com/ EidolonHost
  */
 class Dsm extends Module {
@@ -165,26 +165,7 @@ class Dsm extends Module {
 					'message' => Language::_("Dsm.!error.Dsm_hostname.format", true)
 				)
 			),
-			'Dsm_vserver_id' => array(
-				'format' => array(
-					'if_set' => true,
-					'rule' => array("matches", "/^[0-9]+$/"),
-					'message' => Language::_("Dsm.!error.Dsm_vserver_id.format", true)
-				)
-			)
 		);
-
-		// Template must be given if it can be set by the client
-		if (isset($package->meta->set_template) && $package->meta->set_template == "client" &&
-			isset($package->meta->type)) {
-
-			$rules['Dsm_template'] = array(
-				'valid' => array(
-					'rule' => array(array($this, "validateTemplate"), $package->meta->type, $package->module_row, $package->module_group),
-					'message' => Language::_("Dsm.!error.Dsm_template.valid", true)
-				)
-			);
-		}
 
 		// Virtual Server ID is not required on add
 		if (empty($vars['Dsm_vserver_id']) && !$edit)
@@ -193,8 +174,6 @@ class Dsm extends Module {
 		// Set fields to optional
 		if ($edit) {
 			$rules['Dsm_hostname']['format']['if_set'] = true;
-			if (isset($rules['Dsm_template']))
-				$rules['Dsm_template']['valid']['if_set'] = true;
 		}
 
 		$this->Input->setRules($rules);
@@ -770,7 +749,7 @@ class Dsm extends Module {
 	 * 	- encrypted Whether or not this field should be encrypted (default 0, not encrypted)
 	 */
 	public function addModuleRow(array &$vars) {
-		$meta_fields = array("server_name", "user_name", "password", "host", "port");
+		$meta_fields = array("server_name", "datacenter", "server_loc", "device_id", "device_ip");
 		$encrypted_fields = array("user_name", "password");
 
 		$this->Input->setRules($this->getRowRules($vars));
@@ -1998,30 +1977,38 @@ class Dsm extends Module {
 					'message' => Language::_("Dsm.!error.server_name.empty", true)
 				)
 			),
-			'user_name' => array(
+			'datacenter' => array(
 				'empty' => array(
 					'rule' => "isEmpty",
 					'negate' => true,
-					'message' => Language::_("Dsm.!error.user_id.empty", true)
+					'message' => Language::_("Dsm.!error.datacenter.empty", true)
 				)
 			),
-			'password' => array(
+			'server_loc' => array(
 				'empty' => array(
 					'rule' => "isEmpty",
 					'negate' => true,
-					'message' => Language::_("Dsm.!error.key.empty", true)
+					'message' => Language::_("Dsm.!error.location.empty", true)
 				)
 			),
+			'device_id' => array(
+                                'empty' => array(
+                                        'rule' => "isEmpty",
+                                        'negate' => true,
+                                        'message' => Language::_("Dsm.!error.device_id.empty", true)
+                                )
+                        ),
+			'device_ip' => array(
+                                'empty' => array(
+                                        'rule' => "isEmpty",
+                                        'negate' => true,
+                                        'message' => Language::_("Dsm.!error.device_ip.empty", true)
+                                )
+                        ),
 			'host' => array(
 				'format' => array(
 					'rule' => array(array($this, "validateHostName")),
 					'message' => Language::_("Dsm.!error.host.format", true)
-				)
-			),
-			'port' => array(
-				'format' => array(
-					'rule' => array("matches", "/^[0-9]+$/"),
-					'message' => Language::_("Dsm.!error.port.format", true)
 				)
 			)
 		);
@@ -2040,56 +2027,10 @@ class Dsm extends Module {
 					'rule' => array("in_array", array_keys($this->getTypes())),
 					'message' => Language::_("Dsm.!error.meta[type].valid", true)
 				)
-			),
-			'meta[nodes]' => array(
-				'empty' => array(
-					'rule' => array(array($this, "validateNodeSet"), (isset($vars['meta']['node_group']) ? $vars['meta']['node_group'] : null)),
-					'message' => Language::_("Dsm.!error.meta[nodes].empty", true),
-				)
-			),
-			'meta[plan]' => array(
-				'empty' => array(
-					'rule' => "isEmpty",
-					'negate' => true,
-					'message' => Language::_("Dsm.!error.meta[plan].empty", true)
-				)
-			),
-			'meta[set_template]' => array(
-				'format' => array(
-					'rule' => array("in_array", array("admin", "client")),
-					'message' => Language::_("Dsm.!error.meta[set_template].format", true)
-				)
 			)
 		);
 
-		// A template must be given for this package
-		if (isset($vars['meta']['set_template']) && $vars['meta']['set_template'] == "admin") {
-			$rules['meta[template]'] = array(
-				'empty' => array(
-					'rule' => array("in_array", array("", "--none--")),
-					'negate' => true,
-					'message' => Language::_("Dsm.!error.meta[template].empty", true)
-				)
-			);
-		}
-
 		return $rules;
-	}
-
-	/**
-	 * Validates that at least one node was selected when adding a package
-	 *
-	 * @param array $nodes A list of node names
-	 * @param string $node_groups A selected node group
-	 * @return boolean True if at least one node was given, false otherwise
-	 */
-	public function validateNodeSet($nodes, $node_group=null) {
-		// Require at least one node or node group
-		if ($node_group === null)
-			return (isset($nodes[0]) && !empty($nodes[0]));
-		elseif ($node_group != "")
-			return true;
-		return false;
 	}
 
 	/**
@@ -2103,23 +2044,6 @@ class Dsm extends Module {
 			return false;
 
 		return $this->Input->matches($host_name, "/^([a-z0-9]|[a-z0-9][a-z0-9\-]{0,61}[a-z0-9])(\.([a-z0-9]|[a-z0-9][a-z0-9\-]{0,61}[a-z0-9]))+$/");
-	}
-
-	/**
-	 * Validates whether the given template is a valid template for this server type
-	 *
-	 * @param string $template The IOS template
-	 * @param string $type The type of server (i.e. "openvz", "xen hvm", "xen", "kvm")
-	 * @param string $module_row The server module row
-	 * @param string $module_group The server module group (optional, default "")
-	 * @return boolean True if the template is valid, false otherwise
-	 */
-	public function validateTemplate($template, $type, $module_row, $module_group = "") {
-		// Fetch the module row
-		$row = $this->getModuleRowByServer($module_row, $module_group);
-		$templates = $this->getTemplates($type, $row);
-
-		return in_array($template, $templates);
 	}
 }
 ?>

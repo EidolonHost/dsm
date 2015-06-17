@@ -16,12 +16,12 @@ $lang['Dsm.!error.user_id.empty'] = "Please enter a user ID.";
 $lang['Dsm.!error.key.empty'] = "Please enter a key.";
 $lang['Dsm.!error.host.format'] = "The hostname appears to be invalid.";
 $lang['Dsm.!error.port.format'] = "Please enter a valid port number.";
+$lang['Dsm.!error.device_id.empty'] = "The Device ID appears to be missing.";
+$lang['Dsm.!error.device_ip.empty'] = "The Device IP appears to be missing.";
 
 $lang['Dsm.!error.meta[type].valid'] = "Please select a valid server type.";
-$lang['Dsm.!error.meta[nodes].empty'] = "Please select at least one node or node group.";
-$lang['Dsm.!error.meta[plan].empty'] = "Please select a plan.";
-$lang['Dsm.!error.meta[set_template].format'] = "Please set whether to select a template or to allow clients to set a template.";
-$lang['Dsm.!error.meta[template].empty'] = "Please select a template.";
+$lang['Dsm.!error.meta[datacenter].empty'] = "Please set a datacenter for the server.";
+$lang['Dsm.!error.meta[location].empty'] = "Please set a location for the server.";
 
 $lang['Dsm.!error.api.internal'] = "An internal error occurred, or the server did not respond to the request.";
 
@@ -76,11 +76,11 @@ $lang['Dsm.order_options.first'] = "First unassigned server";
 // Module row meta data
 $lang['Dsm.row_meta.server_name'] = "Server Label";
 $lang['Dsm.row_meta.host'] = "Hostname";
-$lang['Dsm.row_meta.user_name'] = "Username (root for Linux servers, Administrator for Windows, etc)";
-$lang['Dsm.row_meta.password'] = "Password";
+$lang['Dsm.row_meta.datacenter'] = "Datacenter (e.g., SingleHop)";
+$lang['Dsm.row_meta.server_loc'] = "Location (e.g., Dallas, TX.)";
 $lang['Dsm.row_meta.conpanel'] = "Control Panel";
-$lang['Dsm.row_meta.port'] = "Port (Can be SSH, RDP, VNC, etc.)";
-$lang['Dsm.row_meta.default_port'] = "22";
+$lang['Dsm.row_meta.device_id'] = "Device ID (e.g., server's ID is 123456.)";
+$lang['Dsm.row_meta.device_ip'] = "Device IP (e.g., server's main IP is 1.2.3.4)";
 
 
 // Server types

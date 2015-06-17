@@ -17,16 +17,34 @@
 						$this->Form->fieldText("server_name", $this->Html->ifSet($vars->server_name), array('id' => "server_name"));
 						?>
 					</li>
+                                        <li>
+                                                <?php
+                                                $this->Form->label($this->_("Dsm.row_meta.host", true), "host");
+                                                $this->Form->fieldText("host", $this->Html->ifSet($vars->host), array('id' => "host"));
+                                                ?>
+                                        </li>
+                                        <li>
+                                                <?php
+                                                $this->Form->label($this->_("Dsm.row_meta.device_ip", true), "device_ip");
+                                                $this->Form->fieldText("device_ip", $this->Html->ifSet($vars->device_ip), array('id' => "device_ip"));
+                                                ?>
+                                        </li>
+                                        <li>
+                                                <?php
+                                                $this->Form->label($this->_("Dsm.row_meta.device_id", true), "device_id");
+                                                $this->Form->fieldText("device_id", $this->Html->ifSet($vars->device_id), array('id' => "device_id"));
+                                                ?>
+                                        </li>
 					<li>
 						<?php
-						$this->Form->label($this->_("Dsm.row_meta.user_name", true), "user_name");
-						$this->Form->fieldText("user_name", $this->Html->ifSet($vars->user_name), array('id' => "user_name"));
+						$this->Form->label($this->_("Dsm.row_meta.datacenter", true), "datacenter");
+						$this->Form->fieldText("datacenter", $this->Html->ifSet($vars->datacenter), array('id' => "datacenter"));
 						?>
 					</li>
 					<li>
 						<?php
-						$this->Form->label($this->_("Dsm.row_meta.password", true), "password");
-						$this->Form->fieldText("password", $this->Html->ifSet($vars->password), array('id' => "password"));
+						$this->Form->label($this->_("Dsm.row_meta.server_loc", true), "server_loc");
+						$this->Form->fieldText("server_loc", $this->Html->ifSet($vars->server_loc), array('id' => "server_loc"));
 						?>
 					</li>
 					<li>
@@ -35,18 +53,6 @@
                                                 $this->Form->fieldText("conpanel", $this->Html->ifSet($vars->key), array('id' => "conpanel"));
                                                 ?>
                                         </li>
-					<li>
-						<?php
-						$this->Form->label($this->_("Dsm.row_meta.host", true), "host");
-						$this->Form->fieldText("host", $this->Html->ifSet($vars->host), array('id' => "host"));
-						?>
-					</li>
-					<li>
-						<?php
-						$this->Form->label($this->_("Dsm.row_meta.port", true), "port");
-						$this->Form->fieldText("port", $this->Html->ifSet($vars->port, $this->_("Dsm.row_meta.default_port", true)), array('id' => "port"));
-						?>
-					</li>
 				</ul>
 			</div>
 
