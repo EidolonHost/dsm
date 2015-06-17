@@ -47,12 +47,6 @@
 						$this->Form->fieldText("server_loc", $this->Html->ifSet($vars->server_loc), array('id' => "server_loc"));
 						?>
 					</li>
-					<li>
-                                                <?php
-                                                $this->Form->label($this->_("Dsm.row_meta.conpanel", true), "conpanel");
-                                                $this->Form->fieldText("conpanel", $this->Html->ifSet($vars->conpanel), array('id' => "conpanel"));
-                                                ?>
-                                        </li>
 				</ul>
 			</div>
 
