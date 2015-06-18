@@ -6,7 +6,7 @@
  * @subpackage blesta.components.modules.Dsm
  * @copyright Copyright (c) 2015, EidolonHost
  * @license http://www.blesta.com/license/ Blesta License Agreement
- * @Based on SolusVM by Blesta
+ * @Based on SolusVM module by Blesta
  * @link http://eidolonhost.com/ EidolonHost
  */
 class Dsm extends Module {
@@ -1997,8 +1997,8 @@ class Dsm extends Module {
                                         'negate' => true,
                                         'message' => Language::_("Dsm.!error.device_id.empty", true)
                                 )
-                        ),
-			'device_ip' => array(
+			),
+                        'device_ip' => array(
                                 'empty' => array(
                                         'rule' => "isEmpty",
                                         'negate' => true,
