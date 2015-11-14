@@ -4,7 +4,7 @@ Dedicated Server Module for Blesta
 
 Installation
 -------------
-1- Move the folder dsm/ to $billing/components/modules/
+1- Move the folder `dsm/` to `$billing/components/modules/` where `$billing` is your actual `Blesta` install.
 
 2- Log into your billing system. Navigate to the Modules section and you'll find the module ready to be installed.
 
@@ -26,3 +26,7 @@ SCREENSHOTS:
 ![](http://i.imgur.com/ca2zGVH.png)
 
 ![](http://i.imgur.com/KIHWUmm.png)
+
+# LICENSE
+
+See `LICENSE` for details.
