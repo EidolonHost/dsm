@@ -1,18 +1,18 @@
-# Contribution Guidelines
+#Contribution Guidelines
 
-## Creating issues
+##Creating issues
 
 Feature requests and bug reports should be made by using the [issue tracker](https://github.com/EidolonHost/dsm/issues). Support questions should be directed to our support email; [support@eidolonhost.com](mailto:support@eidolonhost.com?subject=DSM Support).
 
 **Always be respectful.** Organization members reserve the right to lock topics if they feel necessary.
 
-## Languages
+##Languages
 
 When needing to add labels, placeholders or general text, you **must not** write directly into the source file, rather make use of the `language/en_us` directory.
 
 Always provide the English translation and copy your English string to all other languages - making sure that the indentation and alignment of the arrays are updated.
 
-## Coding Standards
+##Coding Standards
 
 Please follow existing coding standards:
 
@@ -59,7 +59,7 @@ class Foo extends Bar
 
 If you're still unsure, then take a look at existing code.
 
-## Introduction into Git and GitHub
+##Introduction to Git and GitHub
 
 If you are new to Git, GitHub and the whole open source software community, welcome! Here are some resources for getting started and understanding what it's all about.
 
