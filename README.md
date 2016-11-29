@@ -19,18 +19,22 @@ Location where you can install the module is typically Admin > Settings > Module
 That's it!
 
 SCREENSHOTS:
+
+This is what you'd see when you're ready to install the module.
 ![](http://i.imgur.com/DrvqOt6.png)
 
+After installing the module, you'll need to add servers for the module to manage.
 ![](http://i.imgur.com/qKSDE03.png)
 
+Add a group, called Dedicated Servers. Or maybe Shared Servers, Reseller Servers, etc. This is up to you.
 ![](http://i.imgur.com/8A6n3H2.png)
-
+Here, you can see that this process was successfully completed.
 ![](http://i.imgur.com/P7aTbWu.png)
-
+Add server details for the server you want to add to a specific group.
 ![](http://i.imgur.com/4wHxHCT.png)
-
+Here, you see that the dedicated server's been successfully added.
 ![](http://i.imgur.com/ca2zGVH.png)
-
+Assign the server group to a package.
 ![](http://i.imgur.com/KIHWUmm.png)
 
 # USAGE
